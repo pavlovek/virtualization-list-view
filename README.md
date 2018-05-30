@@ -3,6 +3,8 @@ WPF UserControl realize virtualization ListView element supported changing, sort
 
 The purpose of this library is to provide a convenient WPF UserControl for displaying mutable virtualized data with flexible sorting and filtering settings.
 The library is built on the .NET Framework 4.5 in the Visual Studio 2017.
+More about using virtualization data algorithm you can read on our article:
+http://injoit.org/index.php/j1/article/view/485
 
 # Features
 
