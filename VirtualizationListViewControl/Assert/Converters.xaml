@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:VirtualizationListViewControl.Converters">
+
+    <converters:BooleanAndNullToVisibilityConverter x:Key="BooleanAndNullToVisibilityConverter"/>
+    <converters:TrueToFalseConverter x:Key="TrueToFalseConverter"/>
+    <converters:FilterConditionToStringMultiConverter x:Key="FilterConditionToStringMultiConverter"/>
+    <converters:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+    <converters:ObjectToArrayConverter x:Key="ObjectToArrayConverter"/>
+    <converters:BooleanExpressionNodeToArrayConverter x:Key="BooleanExpressionNodeToArrayConverter"/>
+    <converters:FieldLeafToStringMultiConverter x:Key="FieldLeafToStringMultiConverter"/>
+    <converters:ComparisonOperatorToStringConverter x:Key="ComparisonOperatorToStringConverter"/>
+
+</ResourceDictionary>

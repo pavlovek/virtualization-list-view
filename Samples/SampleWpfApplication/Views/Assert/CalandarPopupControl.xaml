@@ -1,0 +1,11 @@
+﻿<UserControl x:Class="SampleWpfApplication.Views.Assert.CalandarPopupControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="CalandarPopup_Loaded">
+    <Grid Height="170" Width="200">
+        <Calendar Name="CalandarControl" 
+                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                  Margin="0"/>
+    </Grid>
+</UserControl>

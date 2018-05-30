@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converters="clr-namespace:SampleWpfApplication.Views.Converters"
+                    xmlns:samplesBasicDto="clr-namespace:SamplesBasicDto;assembly=SamplesBasicDto"
+                    xmlns:virtualizationListViewconverters="clr-namespace:VirtualizationListViewControl.Converters;assembly=VirtualizationListViewControl">
+
+    <converters:EnumItemsSourceByDescriptionConverter x:Key="MimeTypesConverter" 
+                                                      Type="{x:Type samplesBasicDto:MimeTypes}"/>
+    <converters:StringToDateTimeConverter x:Key="StringToDateTimeConverter"/>
+    <converters:DateTimeConverter x:Key="DateTimeConverter"/>
+    
+    <virtualizationListViewconverters:ValidationErrorToResponseConverter x:Key="ValidationErrorToResponseConverter"/>
+
+</ResourceDictionary>

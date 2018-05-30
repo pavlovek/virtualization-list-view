@@ -1,0 +1,570 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:VirtualizationListViewControl.Controls"
+                    xmlns:filtering="clr-namespace:VirtualizationListView.SortAndFilterDTO.Filtering;assembly=VirtualizationListView.SortAndFilterDTO"
+                    xmlns:helpers="clr-namespace:VirtualizationListViewControl.Helpers"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:slaveTypes="clr-namespace:VirtualizationListViewControl.SlaveTypes"
+                    xmlns:filterExpressions="clr-namespace:VirtualizationListView.SortAndFilterDTO.Filtering.FilterExpressions;assembly=VirtualizationListView.SortAndFilterDTO"
+                    xmlns:operators="clr-namespace:VirtualizationListView.SortAndFilterDTO.Filtering.FilterExpressions.Operators;assembly=VirtualizationListView.SortAndFilterDTO"
+                    xmlns:localization="clr-namespace:VirtualizationListViewControl.Localization">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/VirtualizationListViewControl;component/Assert/Styles.xaml"/>
+        <ResourceDictionary Source="/VirtualizationListViewControl;component/Assert/Icons.xaml"/>
+        <ResourceDictionary Source="/VirtualizationListViewControl;component/Assert/Converters.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+    
+    <Style TargetType="controls:FilterConfigurator">
+        <Setter x:Uid="FilterConfiguratorTitle_Setter" 
+                Property="Title" Value="{x:Static localization:LocalizationDictionary.FilterConfiguratorTitle}"/>
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="#333333" />
+        <Setter Property="MinWidth" Value="800" />
+        <Setter Property="MinHeight" Value="400" />
+        <Setter Property="ShowInTaskbar" Value="False" />
+        <Setter Property="ResizeMode" Value="NoResize" />
+        <Setter Property="SizeToContent" Value="WidthAndHeight" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:FilterConfigurator">
+                    <ControlTemplate.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="FontFamily" Value="Segoe UI" />
+                            <Setter Property="FontSize" Value="13" />
+                            <Setter Property="Foreground" Value="#333333" />
+                        </Style>
+
+                        <system:Double x:Key="ConfigurationButtonSize">22</system:Double>
+                        <Thickness x:Key="ConfigurationButtonMargin">2</Thickness>
+                    </ControlTemplate.Resources>
+                    
+                    <Border Background="#ffffff" 
+                            Margin="{Binding Source={x:Static SystemParameters.WindowNonClientFrameThickness}}">
+                        <Grid>
+                            <Border BorderThickness="1">
+                                <Border.BorderBrush>
+                                    <SolidColorBrush Color="#bfbfbf" Opacity=".5" />
+                                </Border.BorderBrush>
+                                
+                                <AdornerDecorator>
+                                    <Grid>
+                                        <!-- Window background content -->
+                                        <Rectangle Height="96" VerticalAlignment="Top">
+                                            <Rectangle.Fill>
+                                                <LinearGradientBrush StartPoint="0, 0" EndPoint="0, 1" Opacity=".1">
+                                                    <GradientStop Offset="0" Color="#bfbfbf" />
+                                                    <GradientStop Offset=".3" Color="#bfbfbf" />
+                                                    <GradientStop Offset="1" Color="Transparent" />
+                                                </LinearGradientBrush>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+
+                                        <!-- Top blob -->
+                                        <Canvas>
+                                            <Rectangle Fill="#bfbfbf" 
+                                                       Canvas.Top="18" Canvas.Left="24" 
+                                                       Width="100" Height="6" />
+                                        </Canvas>
+                                        
+                                        <Grid Margin="16,24,16,10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="*" />
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Title -->
+                                            <TextBlock Text="{TemplateBinding Title}" 
+                                                       FontFamily="Segoe UI"
+                                                       FontSize="20"
+                                                       TextOptions.TextFormattingMode="Ideal"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Content -->
+                                            <Grid Grid.Row="1" 
+                                                  HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                                  MinWidth="640" MinHeight="250"
+                                                  Margin="0,20,0,0">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition/>
+                                                    <ColumnDefinition/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Saved filters -->
+                                                <Border x:Name="QuerySaveColumn" Grid.Column="0" Grid.Row="0"
+			                                            BorderThickness="0,0,1,0" BorderBrush="LightGray">
+                                                    <Grid x:Name="QuerySaveColumnGrid">
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <TextBlock Grid.Row="0"
+                                                                   x:Uid="SavedFilterTitle_TextBlock"
+					                                               Text="{x:Static localization:LocalizationDictionary.SavedFiltersListTitle}"
+					                                               Margin="5,2,0,2"/>
+
+                                                        <!-- Add new Query -->
+                                                        <Grid Grid.Row="1" Height="27">
+                                                            <Button x:Name="ShowAddFilterPanelButton" 
+                                                                    x:Uid="ShowAddFilterPanel_Button"
+                                                                    Command="{Binding AddNewFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                    ToolTip="{x:Static localization:LocalizationDictionary.AddFilter}"
+                                                                    Visibility="{Binding IsAddingNewFilter, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanAndNullToVisibilityConverter}, ConverterParameter=inverse}"
+                                                                    BorderThickness="0"
+					                                                Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}"
+					                                                HorizontalAlignment="Left"
+					                                                Margin="5,2,0,3">
+                                                                <helpers:RemoveParentMargin>
+                                                                    <Path Data="{DynamicResource PlusIcon}"
+						                                                  Fill="Black" Stretch="Fill"/>
+                                                                </helpers:RemoveParentMargin>
+                                                            </Button>
+
+                                                            <Grid x:Name="AddFilterPanel" 
+                                                                  Visibility="{Binding IsAddingNewFilter, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanAndNullToVisibilityConverter}}"
+                                                                  VerticalAlignment="Center">
+
+                                                                <TextBox x:Name="FilterNameTextBox"
+                                                                         Text="{Binding NewFilterName, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                                                         HorizontalAlignment="Left"
+                                                                         Width="100" Height="24"
+                                                                         Margin="0,0,5,0"/>
+
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            HorizontalAlignment="Right"
+                                                                            Margin="0,0,2,0">
+                                                                    <Button x:Name="AddFilterButton" 
+                                                                            x:Uid="AddFilter_Button"
+                                                                            Command="{Binding AddNewFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                            CommandParameter="{Binding NewFilterName, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                            IsDefault="True"
+                                                                            IsEnabled="{Binding NewFilterName, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource NullToBooleanConverter}, ConverterParameter=inverse}"
+                                                                            ToolTip="{x:Static localization:LocalizationDictionary.AddFilter}"
+                                                                            BorderThickness="0"
+                                                                            Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}"
+                                                                            Margin="0,0,3,0">
+                                                                        <helpers:RemoveParentMargin>
+                                                                            <Path Data="{DynamicResource PlusIcon}"
+						                                                          Fill="Black" Stretch="Fill"/>
+                                                                        </helpers:RemoveParentMargin>
+                                                                    </Button>
+                                                                    <Button x:Name="CancelAddFilterButton" 
+                                                                            x:Uid="CancelAddFilter_Button"
+                                                                            Command="{Binding CancelAddingNewFilterCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                            IsCancel="True"
+                                                                            ToolTip="{x:Static localization:LocalizationDictionary.Cancel}"
+                                                                            BorderThickness="0"
+                                                                            Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}">
+                                                                        <helpers:RemoveParentMargin>
+                                                                            <Path Data="F1 M 24,12C 30.6274,12 36,17.3726 36,24C 36,30.6274 30.6274,36 24,36C 17.3726,36 12,30.6274 12,24C 12,17.3726 17.3726,12 24,12 Z M 24,15C 22.2389,15 20.5959,15.5058 19.2085,16.3801L 31.6199,28.7915C 32.4942,27.4041 33,25.7611 33,24C 33,19.0294 28.9706,15 24,15 Z M 15,24C 15,28.9706 19.0294,33 24,33C 25.7611,33 27.404,32.4942 28.7914,31.6199L 16.3801,19.2086C 15.5058,20.596 15,22.2389 15,24 Z"
+						                                                          Fill="Black" Stretch="Fill"/>
+                                                                        </helpers:RemoveParentMargin>
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Grid>
+
+                                                        <ListBox x:Name="FiltersList" 
+                                                                 Grid.Row="2"
+                                                                 ItemsSource="{TemplateBinding Filters}"
+                                                                 SelectedItem="{Binding SelectedFilterConfiguration, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                 ItemContainerStyle="{StaticResource StretchedListBoxItem}"
+					                                             BorderThickness="0"
+					                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                                 Width="165" Height="200"
+                                                                 Margin="1,3">
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate DataType="{x:Type filtering:FilterParams}">
+                                                                    <Border x:Name="FilterBorder"
+        					                                                MinHeight="22" Width="140"
+                                                                            HorizontalAlignment="Left"
+                                                                            Padding="3,0,3,0">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="115"/>
+                                                                                <ColumnDefinition/>
+                                                                            </Grid.ColumnDefinitions>
+
+                                                                            <TextBlock x:Name="FilterName" 
+                                                                                       Grid.Column="0" 
+        							                                                   Text="{Binding Name}"
+                                                                                       Width="110"
+                                                                                       TextWrapping="Wrap"
+                                                                                       HorizontalAlignment="Left"
+                                                                                       Background="Transparent"/>
+
+                                                                            <!-- Remove -->
+                                                                            <Button x:Name="RemoveFilterButton" 
+                                                                                    Grid.Column="1" 
+                                                                                    Command="{Binding TemplatedParent.RemoveFilterCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListBox}}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Background="Transparent"
+                                                                                    BorderThickness="0"
+        							                                                Width="20" Height="20"
+        							                                                HorizontalAlignment="Right">
+                                                                                <helpers:RemoveParentMargin>
+                                                                                    <Path Data="F1 M 16,15L 32,15C 32.5523,15 32.75,17.25 32.75,17.25L 15.25,17.25C 15.25,17.25 15.4477,15 16,15 Z M 22.5,12.5L 25.5,12.5C 25.7761,12.5 26.5,13.2239 26.5,13.5C 26.5,13.7762 25.7761,14.5 25.5,14.5L 22.5,14.5C 22.2238,14.5 21.5,13.7762 21.5,13.5C 21.5,13.2239 22.2238,12.5 22.5,12.5 Z M 17.5,18L 30.5,18C 31.0523,18 31.5,18.4477 31.5,19L 30.5,34C 30.5,34.5523 30.0523,35 29.5,35L 18.5,35C 17.9477,35 17.5,34.5523 17.5,34L 16.5,19C 16.5,18.4477 16.9477,18 17.5,18 Z M 19,20L 19.25,33L 21,33L 20.75,20L 19,20 Z M 23,20L 23,33L 25,33L 25,20L 23,20 Z M 27.25,20L 27,33L 28.75,33L 29,20L 27.25,20 Z"
+        							                                                      Fill="Black" Stretch="Fill"
+                                                                                          Margin="{StaticResource ConfigurationButtonMargin}"/>
+                                                                                </helpers:RemoveParentMargin>
+                                                                            </Button>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Expression arguments -->
+                                                <Border Grid.Column="1" Grid.Row="0"
+			                                            BorderThickness="0,0,1,0" BorderBrush="LightGray">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <TextBlock Grid.Row="0"
+                                                                   x:Uid="ExpressionArgumentsTitle_TextBlock" 
+					                                               Text="{x:Static localization:LocalizationDictionary.ExpressionArgumentsTitle}"
+					                                               Margin="5,2,0,10"/>
+
+                                                        <ListBox Grid.Row="1"
+                                                                 ItemsSource="{TemplateBinding FilterableArguments}"
+                                                                 SelectedItem="{Binding SelectedFilterableArgument, RelativeSource={RelativeSource TemplatedParent}}"
+					                                             BorderThickness="0"
+					                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                                 Margin="2,3">
+                                                            <ListBox.ItemTemplate>
+                                                                <DataTemplate DataType="{x:Type slaveTypes:FilterablePropertyDescription}">
+                                                                    <Border x:Name="Border"
+        					                                                MinHeight="20" MinWidth="100">
+                                                                        <TextBlock Text="{Binding Title}"
+                                                                                   FontWeight="Normal"
+        							                                               Margin="3,0"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ListBox.ItemTemplate>
+                                                        </ListBox>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Operators -->
+                                                <Border Grid.Column="2" Grid.Row="0"
+			                                            BorderThickness="0,0,1,0" BorderBrush="LightGray">
+                                                    <StackPanel Orientation="Vertical"
+				                                                Margin="5,30,5,0">
+                                                        <StackPanel.Resources>
+                                                            <helpers:LocalizableEnumItemsSource x:Key="BooleanOperatorsItemsSource"
+                                                                                                Type="{x:Type operators:BooleanOperators}"/>
+                                                            
+                                                            <Style TargetType="{x:Type Button}"
+                                                                   BasedOn="{StaticResource {x:Type Button}}">
+                                                                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                                                                <Style.Triggers>
+                                                                    <Trigger Property="IsEnabled" Value="false">
+                                                                        <Setter Property="Opacity" Value="0.3"/>
+                                                                    </Trigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Resources>
+
+                                                        <!-- Add operand -->
+                                                        <Button x:Uid="AddOperand_Button"
+                                                                Command="{Binding AddOperandCommand, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                                Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}"
+                                                                ToolTip="{x:Static localization:LocalizationDictionary.AddOperandToExpression}"
+                                                                BorderThickness="0"
+					                                            Margin="2,5">
+                                                            <helpers:RemoveParentMargin>
+                                                                <Path Data="F1 M 12,22L 12,26L 28.25,26L 21,33L 27.5,33L 37,24L 27.5,15L 21,15L 28.25,22L 12,22 Z "
+						                                              Fill="Black" Stretch="Fill"
+                                                                      Margin="{StaticResource ConfigurationButtonMargin}"/>
+                                                            </helpers:RemoveParentMargin>
+                                                        </Button>
+
+                                                        <!-- Add operator -->
+                                                        <ComboBox x:Name="AddingOperatorComboBox" 
+                                                                  x:Uid="AddingOperator_ComboBox"
+                                                                  Style="{StaticResource AddBracketsButtonPopupList}" 
+                                                                  ItemsSource="{Binding Source={StaticResource BooleanOperatorsItemsSource}}"
+                                                                  ToolTip="{x:Static localization:LocalizationDictionary.AddOperator}"
+                                                                  IsEnabled="{Binding SelectedFilterConfiguration, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource NullToBooleanConverter}, ConverterParameter=inverse}"
+					                                              Width="Auto" Height="{StaticResource ConfigurationButtonSize}"
+					                                              Margin="2,5">
+                                                            <ComboBox.ItemContainerStyle>
+                                                                <Style TargetType="{x:Type ComboBoxItem}"
+                                                                       BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+                                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                                                </Style>
+                                                            </ComboBox.ItemContainerStyle>
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border BorderThickness="0"
+                                                                            Background="Transparent"
+                                                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                                        <Border.InputBindings>
+                                                                            <MouseBinding MouseAction="LeftClick" 
+                                                                                          Command="{Binding TemplatedParent.AddNodeCommand, ElementName=AddingOperatorComboBox}"
+                                                                                          CommandParameter="{Binding Converter={StaticResource BooleanOperatorsItemsSource}, ConverterParameter='inverse'}"/>
+                                                                        </Border.InputBindings>
+                                                                        <TextBlock Text="{Binding}"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+
+                                                        <!-- Separator -->
+                                                        <Border BorderThickness="0,1,0,0"
+					                                            BorderBrush="LightGray"
+					                                            Margin="0,5"/>
+
+                                                        <!-- Remove operand -->
+                                                        <Button x:Uid="RemoveOperand_Button" 
+                                                                Command="{Binding RemoveOperandCommand, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                                Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}"
+                                                                ToolTip="{x:Static localization:LocalizationDictionary.RemoveOperandFromExpression}"
+                                                                BorderThickness="0"
+					                                            Margin="2,5">
+                                                            <helpers:RemoveParentMargin>
+                                                                <Path Data="F1 M 36,22L 36,26L 19.75,26L 27,33L 20.5,33L 11,24L 20.5,15L 27,15L 19.75,22L 36,22 Z "
+						                                              Fill="Black" Stretch="Fill"
+                                                                      Margin="{StaticResource ConfigurationButtonMargin}"/>
+                                                            </helpers:RemoveParentMargin>
+                                                        </Button>
+
+                                                        <!-- Clear -->
+                                                        <Button x:Uid="Clear_Button" 
+                                                                Command="{Binding ClearExpressionCommand, RelativeSource={RelativeSource TemplatedParent}}" 
+                                                                Width="{StaticResource ConfigurationButtonSize}" Height="{StaticResource ConfigurationButtonSize}"
+                                                                ToolTip="{x:Static localization:LocalizationDictionary.ClearExpression}"
+                                                                BorderThickness="0"
+					                                            Margin="2,5">
+                                                            <helpers:RemoveParentMargin>
+                                                                <Path Data="F1 M 16,15L 32,15C 32.5523,15 32.75,17.25 32.75,17.25L 15.25,17.25C 15.25,17.25 15.4477,15 16,15 Z M 22.5,12.5L 25.5,12.5C 25.7761,12.5 26.5,13.2239 26.5,13.5C 26.5,13.7762 25.7761,14.5 25.5,14.5L 22.5,14.5C 22.2238,14.5 21.5,13.7762 21.5,13.5C 21.5,13.2239 22.2238,12.5 22.5,12.5 Z M 17.5,18L 30.5,18C 31.0523,18 31.5,18.4477 31.5,19L 30.5,34C 30.5,34.5523 30.0523,35 29.5,35L 18.5,35C 17.9477,35 17.5,34.5523 17.5,34L 16.5,19C 16.5,18.4477 16.9477,18 17.5,18 Z M 19,20L 19.25,33L 21,33L 20.75,20L 19,20 Z M 23,20L 23,33L 25,33L 25,20L 23,20 Z M 27.25,20L 27,33L 28.75,33L 29,20L 27.25,20 Z"
+						                                              Fill="Black" Stretch="Fill"
+                                                                      Margin="{StaticResource ConfigurationButtonMargin}"/>
+                                                            </helpers:RemoveParentMargin>
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- Expression's query -->
+                                                <Border Grid.Column="3" Grid.Row="0"
+			                                            BorderThickness="0,0,1,0" BorderBrush="LightGray"
+                                                        Width="155">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                        </Grid.RowDefinitions>
+
+                                                        <TextBlock Grid.Row="0"
+                                                                   x:Uid="ExpressionQueryTitle_TextBlock" 
+					                                               Text="{x:Static localization:LocalizationDictionary.ExpressionQueryTitle}"
+					                                               Margin="5,2,0,10"/>
+
+                                                        <ContentControl x:Name="Expressions"
+                                                                        Grid.Row="1"
+                                                                        Content="{Binding SelectedFilterConfiguration.Conditions.Root, RelativeSource={RelativeSource TemplatedParent}}"
+								                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+								                                        HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                                            <ContentControl.Style>
+                                                                <Style TargetType="{x:Type ContentControl}">
+                                                                    <Setter Property="Content" Value="{Binding SelectedFilterConfiguration.Conditions.Root, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Content, RelativeSource={x:Static RelativeSource.Self}}" Value="{x:Null}">
+                                                                            <Setter Property="Template">
+                                                                                <Setter.Value>
+                                                                                    <ControlTemplate>
+                                                                                        <TextBlock x:Uid="DefaultExpressionQueryText_TextBlock" 
+                                                                                                   Text="{x:Static localization:LocalizationDictionary.DefaultExpressionQueryText}"
+													                                               TextWrapping="Wrap"
+													                                               FontSize="14" FontWeight="Bold"
+													                                               Foreground="LightGray" Opacity="20"
+													                                               TextAlignment="Center"
+                                                                                                   Margin="5,0"
+													                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                    </ControlTemplate>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </ContentControl.Style>
+
+                                                            <ContentControl.Resources>
+                                                                <DataTemplate DataType="{x:Type filterExpressions:ExpressionTreeNode}">
+                                                                    <TreeView x:Name="ExpressionTreeView"
+                                                                              ItemsSource="{Binding Converter={StaticResource ObjectToArrayConverter}}"
+                                                                              helpers:BindableSelectedItemHelper.SelectedItem="{Binding TemplatedParent.TemplatedParent.SelectedExpression, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                                              BorderThickness="0"
+					                                                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                                        <TreeView.ItemContainerStyle>
+                                                                            <Style TargetType="{x:Type TreeViewItem}"
+                                                                                   BasedOn="{StaticResource StretchedTreeViewItem}">
+                                                                                <Setter Property="IsExpanded" Value="True"/>
+                                                                            </Style>
+                                                                        </TreeView.ItemContainerStyle>
+
+                                                                        <TreeView.Resources>
+                                                                            <helpers:LocalizableEnumItemsSource x:Key="BooleanOperatorsItemsSource"
+                                                                                                                Type="{x:Type operators:BooleanOperators}"/>
+
+                                                                            <!-- Representation expression node -->
+                                                                            <HierarchicalDataTemplate DataType="{x:Type filterExpressions:BooleanOperatorNode}"
+                                                                                                      ItemsSource="{Binding Converter={StaticResource BooleanExpressionNodeToArrayConverter}}">
+                                                                                <TextBlock Text="{Binding Operator, Converter={StaticResource BooleanOperatorsItemsSource}}"
+                                                                                           FontSize="12"
+                                                                                           FontWeight="Normal"/>
+                                                                            </HierarchicalDataTemplate>
+                                                                            
+                                                                            <!-- Representation comparision node -->
+                                                                            <HierarchicalDataTemplate DataType="{x:Type filterExpressions:ComparisonOperatorNode}">
+                                                                                <WrapPanel Orientation="Horizontal">
+                                                                                    <TextBlock FontSize="12" 
+                                                                                               FontWeight="Normal">
+                                                                                        <TextBlock.Text>
+                                                                                            <MultiBinding Converter="{StaticResource FieldLeafToStringMultiConverter}">
+                                                                                                <Binding Path="Left"/>
+                                                                                                <Binding Path="TemplatedParent.FilterableArguments" ElementName="Expressions"/>
+                                                                                            </MultiBinding>
+                                                                                        </TextBlock.Text>
+                                                                                    </TextBlock>
+                                                                                    <TextBlock Text="{Binding Operator, Converter={StaticResource ComparisonOperatorToStringConverter}}" 
+                                                                                               FontSize="12"
+                                                                                               FontWeight="Normal"
+                                                                                               Margin="5,0"/>
+                                                                                    <controls:ValueViewContentControl ConvertingContent="{Binding Right.FieldValue}"
+                                                                                                                      AvailableFilterableProperties="{Binding TemplatedParent.FilterableArguments, ElementName=Expressions}"
+                                                                                                                      SelectedComparisonFieldLeaf="{Binding Left}"/>
+                                                                                </WrapPanel>
+                                                                            </HierarchicalDataTemplate>
+                                                                        </TreeView.Resources>
+                                                                    </TreeView>
+                                                                </DataTemplate>
+                                                            </ContentControl.Resources>
+                                                        </ContentControl>
+                                                    </Grid>
+                                                </Border>
+
+                                                <!-- Expression value -->
+                                                <Border Grid.Column="4" Grid.Row="0"
+			                                            BorderThickness="0" BorderBrush="LightGray"
+                                                        Width="230">
+                                                    <ContentControl x:Name="ExpressionValueContentControl"
+                                                                    Content="{Binding SelectedExpression, RelativeSource={RelativeSource TemplatedParent}}"
+								                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+								                                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                                        <ContentControl.Style>
+                                                            <Style TargetType="{x:Type ContentControl}">
+                                                                <Setter Property="Content" Value="{Binding SelectedExpression, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Content, RelativeSource={x:Static RelativeSource.Self}}" Value="{x:Null}">
+                                                                        <Setter Property="Template">
+                                                                            <Setter.Value>
+                                                                                <ControlTemplate>
+                                                                                    <TextBlock x:Uid="DefaultExpressionValueText_TextBlock" 
+                                                                                               Text="{x:Static localization:LocalizationDictionary.DefaultExpressionValueText}"
+													                                           TextWrapping="Wrap"
+													                                           FontSize="14" FontWeight="Bold"
+													                                           Foreground="LightGray" Opacity="20"
+													                                           TextAlignment="Center"
+													                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                </ControlTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ContentControl.Style>
+
+                                                        <ContentControl.Resources>
+                                                            <helpers:LocalizableEnumItemsSource x:Key="ComparisonOperatorsItemsSource"
+                                                                                                Type="{x:Type operators:ComparisonOperators}"/>
+                                                            
+                                                            <DataTemplate DataType="{x:Type filterExpressions:ComparisonOperatorNode}">
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition/>
+                                                                    </Grid.RowDefinitions>
+
+                                                                    <ComboBox x:Name="OperatorComboBox" 
+						                                                      Grid.Row="0"
+                                                                              ItemsSource="{Binding TemplatedParent.TemplatedParent.AvailableComparisonOperators, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                              SelectedItem="{Binding TemplatedParent.TemplatedParent.SelectedComparisonOperator, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ComparisonOperatorsItemsSource}}"
+					                                                          Height="23" Width="164"
+						                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+					                                                          Margin="0,5,5,0"/>
+
+                                                                    <Border Grid.Row="1"
+						                                                    BorderThickness="0,0,0,1" BorderBrush="LightGray"
+						                                                    HorizontalAlignment="Stretch"
+						                                                    Margin="5,3"/>
+
+                                                                    <controls:ExpressionValueLeafContentControl Grid.Row="2"
+                                                                                                                Content="{Binding Right}"
+                                                                                                                AvailableFilterableProperties="{Binding TemplatedParent.TemplatedParent.FilterableArguments, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                                                                SelectedComparisonFieldLeaf="{Binding Left}"/>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                            
+                                                            <DataTemplate DataType="{x:Type filterExpressions:BooleanOperatorNode}"/>
+                                                        </ContentControl.Resources>
+                                                    </ContentControl>
+                                                </Border>
+
+                                                <!-- Validation error text -->
+                                                <TextBlock Grid.Row="1" Grid.Column="0"
+                                                           Grid.ColumnSpan="4"
+                                                           Text="{Binding FilterValidationError, RelativeSource={RelativeSource TemplatedParent}}"
+                                                           Foreground="Red"
+                                                           Margin="20,5"/>
+                                                
+                                                <Button Grid.Row="1" Grid.Column="4"
+                                                        x:Uid="OK_Button" 
+			                                            Content="{x:Static localization:LocalizationDictionary.Ok}"
+                                                        Command="{Binding FinishFiltersConfigurateCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                        Height="25" Width="90"
+			                                            HorizontalAlignment="Right" VerticalAlignment="Center"
+			                                            Margin="5"/>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </AdornerDecorator>
+                            </Border>
+                            
+                            <Border BorderBrush="#bfbfbf" BorderThickness="1" 
+                                    Visibility="{Binding IsActive, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Converter={StaticResource BooleanAndNullToVisibilityConverter}}"/>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Setter Property="WindowChrome.WindowChrome">
+            <Setter.Value>
+                <WindowChrome CornerRadius="0" 
+                              GlassFrameThickness="1" 
+                              UseAeroCaptionButtons="False" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+</ResourceDictionary>

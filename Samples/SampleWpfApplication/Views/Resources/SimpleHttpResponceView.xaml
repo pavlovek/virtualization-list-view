@@ -1,0 +1,327 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:slaveTypes="clr-namespace:VirtualizationListViewControl.SlaveTypes;assembly=VirtualizationListViewControl"
+                    xmlns:helpers="clr-namespace:VirtualizationListViewControl.Helpers;assembly=VirtualizationListViewControl"
+                    xmlns:sortAndFilterDto="clr-namespace:VirtualizationListView.SortAndFilterDTO;assembly=VirtualizationListView.SortAndFilterDTO"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:samplesSpecificDto="clr-namespace:SamplesSpecificDto;assembly=SamplesSpecificDto"
+                    xmlns:glob="clr-namespace:System.Globalization;assembly=mscorlib">
+
+    <system:Double x:Key="FieldFontSize">11</system:Double>
+    <system:Double x:Key="FieldHeight">50</system:Double>
+    
+    <slaveTypes:VirtualizationListViewColumnCollection x:Key="SimpleHttpResponceViewStyle">
+        <!-- Detect Time -->
+        <slaveTypes:VirtualizationListViewColumn Header="Detect Time"
+                                                 Width="100"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Width="100">
+                            <!-- Bind over Data property on DataWrapper wrap -->
+                            <TextBox Text="{Binding Data.DetectTime, Converter={StaticResource StringToDateTimeConverter}, ConverterCulture={x:Static glob:CultureInfo.CurrentCulture}, Mode=OneWay}" 
+                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                     TextAlignment="Center" TextWrapping="Wrap"
+                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                     Foreground="{StaticResource ItemText}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Width="100"
+                                     Margin="10,3"/>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <sortAndFilterDto:FieldDescription FieldName="DetectTime" 
+                                                   Assembly="SamplesBasicDto" 
+                                                   DeclaringType="SamplesBasicDto.HttpResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+
+        <!-- Mime Type -->
+        <slaveTypes:VirtualizationListViewColumn Header="Mime Type"
+                                                 Width="86"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Width="86">
+                            <!-- Bind over Data property on DataWrapper wrap -->
+                            <TextBox Text="{Binding Data.MimeType, Mode=OneWay, Converter={StaticResource MimeTypesConverter}}" 
+                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                     TextAlignment="Center" TextWrapping="Wrap"
+                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                     Foreground="{StaticResource ItemText}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Width="65"
+                                     Margin="10,3"/>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <sortAndFilterDto:FieldDescription FieldName="MimeType" 
+                                                   Assembly="SamplesBasicDto" 
+                                                   DeclaringType="SamplesBasicDto.HttpResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+
+        <!-- Size -->
+        <slaveTypes:VirtualizationListViewColumn Header="Size"
+                                                 Width="86"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Width="86">
+                            <StackPanel Orientation="Vertical"
+                                        Margin="10,3">
+                                <!-- Bind over Data property on DataWrapper wrap -->
+                                <TextBox Text="{Binding Data.Size, Mode=OneWay}" 
+                                         BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                         TextAlignment="Center" TextWrapping="Wrap"
+                                         FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                         Foreground="{StaticResource ItemText}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         Width="65"/>
+                                <TextBlock Text="bytes"
+                                           FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                           Foreground="{StaticResource ItemText}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <sortAndFilterDto:FieldDescription FieldName="Size" 
+                                                   Assembly="SamplesBasicDto" 
+                                                   DeclaringType="SamplesBasicDto.HttpResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+
+        <!-- EncodingType (HttpTextResponce) -->
+        <slaveTypes:VirtualizationListViewColumn Header="Encoding Type"
+                                                 Width="100"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Width="100">
+                            <!-- Bind over Data property on DataWrapper wrap -->
+                            <TextBox Text="{Binding Data.EncodingType, Mode=OneWay}" 
+                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                     TextAlignment="Center" TextWrapping="Wrap"
+                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                     Foreground="{StaticResource ItemText}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Width="65"
+                                     Margin="10,3"/>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <sortAndFilterDto:FieldDescription FieldName="EncodingType" 
+                                                   Assembly="SamplesSpecificDto" 
+                                                   DeclaringType="SamplesSpecificDto.HttpTextResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+
+        <!-- ImageSize & ColorDepth (HttpImageResponce) -->
+        <slaveTypes:VirtualizationListViewColumn Header="Image Parameters"
+                                                 Width="200"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                Width="200">
+                            <!-- Bind over Data property on DataWrapper wrap -->
+                            <ContentControl Content="{Binding Data, Mode=OneWay}"
+                                            Margin="10,3">
+                                <ContentControl.Resources>
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpImageResponce}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Column="0" Grid.Row="0" 
+                                                       Text="Image Size"
+                                                       Foreground="{StaticResource ItemTextDisabled}"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                            <StackPanel Grid.Column="0" Grid.Row="1" 
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBox Text="{Binding ImageSize.Width, Mode=OneWay}" 
+                                                         BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                         TextAlignment="Center" TextWrapping="Wrap"
+                                                         FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                         Foreground="{StaticResource ItemText}"/>
+                                                <TextBlock Text="x"
+                                                           Foreground="{StaticResource ItemText}"
+                                                           FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                           Margin="3,0"/>
+                                                <TextBox Text="{Binding ImageSize.Height, Mode=OneWay}" 
+                                                         BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                         TextAlignment="Center" TextWrapping="Wrap"
+                                                         FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                         Foreground="{StaticResource ItemText}"/>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1" Grid.Row="0" 
+                                                       Text="Color Depth"
+                                                       Foreground="{StaticResource ItemTextDisabled}"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                            <TextBox Grid.Column="1" Grid.Row="1" 
+                                                     Text="{Binding ColorDepth, Mode=OneWay}" 
+                                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                     TextAlignment="Center" TextWrapping="Wrap"
+                                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                     Foreground="{StaticResource ItemText}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpTextResponce}"/>
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpVideoResponce}"/>
+                                </ContentControl.Resources>
+                            </ContentControl>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <!-- Set only one property for sorting -->
+                <sortAndFilterDto:FieldDescription FieldName="ImageSize" 
+                                                   Assembly="SamplesSpecificDto" 
+                                                   DeclaringType="SamplesSpecificDto.HttpImageResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+
+        <!-- Resolution, Duration & CodecType (HttpVideoResponce) -->
+        <!-- If Width not set, that column has max space width -->
+        <slaveTypes:VirtualizationListViewColumn Header="Video Parameters"
+                                                 DisabledSorting="True">
+            <slaveTypes:VirtualizationListViewColumn.CellTemplate>
+                <DataTemplate>
+                    <helpers:RemoveParentMargin>
+                        <Border BorderThickness="0" BorderBrush="{StaticResource SeparatorBackground}"
+                                Height="{StaticResource FieldHeight}"
+                                HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                                Width="300">
+                            <!-- Bind over Data property on DataWrapper wrap -->
+                            <ContentControl Content="{Binding Data, Mode=OneWay}"
+                                            Margin="10,3">
+                                <ContentControl.Resources>
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpVideoResponce}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Column="0" Grid.Row="0" 
+                                                       Text="Duration"
+                                                       Foreground="{StaticResource ItemTextDisabled}"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                            <TextBox Grid.Column="0" Grid.Row="1" 
+                                                     Text="{Binding Duration, Mode=OneWay}" 
+                                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                     TextAlignment="Center" TextWrapping="Wrap"
+                                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                     Foreground="{StaticResource ItemText}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            
+                                            <TextBlock Grid.Column="1" Grid.Row="0" 
+                                                       Text="Resolution"
+                                                       Foreground="{StaticResource ItemTextDisabled}"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                            <StackPanel Grid.Column="1" Grid.Row="1" 
+                                                        Orientation="Horizontal"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBox Text="{Binding Resolution.Width, Mode=OneWay}" 
+                                                         BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                         TextAlignment="Center" TextWrapping="Wrap"
+                                                         FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                         Foreground="{StaticResource ItemText}"/>
+                                                <TextBlock Text="x"
+                                                           Foreground="{StaticResource ItemText}"
+                                                           FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                           Margin="3,0"/>
+                                                <TextBox Text="{Binding Resolution.Height, Mode=OneWay}" 
+                                                         BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                         TextAlignment="Center" TextWrapping="Wrap"
+                                                         FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                         Foreground="{StaticResource ItemText}"/>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="2" Grid.Row="0" 
+                                                       Text="Codec Type"
+                                                       Foreground="{StaticResource ItemTextDisabled}"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                            <TextBox Grid.Column="2" Grid.Row="1" 
+                                                     Text="{Binding CodecType, Mode=OneWay}" 
+                                                     BorderThickness="0" IsReadOnly="True" Background="Transparent"
+                                                     TextAlignment="Center" TextWrapping="Wrap"
+                                                     FontSize="{StaticResource FieldFontSize}" FontWeight="Bold"
+                                                     Foreground="{StaticResource ItemText}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpTextResponce}"/>
+                                    <DataTemplate DataType="{x:Type samplesSpecificDto:HttpImageResponce}"/>
+                                </ContentControl.Resources>
+                            </ContentControl>
+                        </Border>
+                    </helpers:RemoveParentMargin>
+                </DataTemplate>
+            </slaveTypes:VirtualizationListViewColumn.CellTemplate>
+            <slaveTypes:VirtualizationListViewColumn.BoundProperty>
+                <!-- Define your property description on CellTemplate -->
+                <!-- Set only one property for sorting -->
+                <sortAndFilterDto:FieldDescription FieldName="Duration" 
+                                                   Assembly="SamplesSpecificDto" 
+                                                   DeclaringType="SamplesSpecificDto.HttpVideoResponce"/>
+            </slaveTypes:VirtualizationListViewColumn.BoundProperty>
+        </slaveTypes:VirtualizationListViewColumn>
+    </slaveTypes:VirtualizationListViewColumnCollection>
+
+</ResourceDictionary>

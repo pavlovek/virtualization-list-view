@@ -1,0 +1,10 @@
+diff a/CommonLibs/GUILibs/DataVirtualization/VirtualizationListViewControl/Themes/FilterConfigurator.xaml b/CommonLibs/GUILibs/DataVirtualization/VirtualizationListViewControl/Themes/FilterConfigurator.xaml	(rejected hunks)
+@@ -508,7 +508,7 @@
+                                 </AdornerDecorator>
+                             </Border>
+                             <Border BorderBrush="#bfbfbf" BorderThickness="1" 
+-                                    Visibility="{Binding IsActive, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Converter={StaticResource BooleanAndNullToVisibilityConverter}}" />
++                                    Visibility="{Binding IsActive, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                         </Grid>
+                     </Border>
+                 </ControlTemplate>
