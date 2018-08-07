@@ -32,6 +32,11 @@ namespace VirtualizationListViewControl.SlaveTypes
         public DataTemplate ValueTemplate { get; set; }
 
         /// <summary>
+        /// Default property value
+        /// </summary>
+        public object DefaultValue { get; set; }
+
+        /// <summary>
         /// Indicate when property value is bound available values
         /// </summary>
         public bool HasAvailableValues { get; set; }

@@ -490,7 +490,9 @@ namespace VirtualizationListViewControl.Controls
             var fieldLeaf = new ExpressionTreeFieldLeaf(null, SelectedFilterableArgument.BoundProperty);
 
             object value;
-            if (fieldLeaf.Property.PropertyType == typeof(DateTime))
+            if (SelectedFilterableArgument.DefaultValue != null)
+                value = SelectedFilterableArgument.DefaultValue;
+            else if (fieldLeaf.Property.PropertyType == typeof(DateTime))
                 value = DateTime.Now;
             else if (fieldLeaf.Property.PropertyType == typeof(String))
                 value = String.Empty;
