@@ -29,4 +29,5 @@ http://injoit.org/index.php/j1/article/view/485
 # Dependencies
 
 * System.Threading.Tasks.Dataflow
-* System.Windows.Interactivity
+* System.Windows.Interactivity (from https://www.nuget.org/packages/Expression.Blend.Sdk/)
+* EntityFramework (for examples)
