@@ -583,22 +583,19 @@ namespace VirtualizationListViewControl.Controls
                     }
                     else
                     {
-                        Trace.WriteLine("Before adding to SelectedExpression.Parent\r\n" 
-                            + SelectedExpression.Parent);
+                        Trace.WriteLine($"Before adding to SelectedExpression.Parent\r\n{SelectedExpression.Parent}");
 
                         if (isSelectedBoolNode)
                             SelectedExpression.Right = newBoolNode;
                         else
                             SelectedExpression.Parent.Right = newBoolNode;
 
-                        Trace.WriteLine("After adding to SelectedExpression.Parent\r\n"
-                            + SelectedExpression.Parent);
+                        Trace.WriteLine($"After adding to SelectedExpression.Parent\r\n{SelectedExpression.Parent}");
 
                         SelectedFilterConfiguration.Conditions.Root = SelectedFilterConfiguration.Conditions.Root.Clone() as ExpressionTreeNode;
                     }
 
-                    Trace.WriteLine("Final expression after adding\r\n"
-                            + SelectedFilterConfiguration.Conditions.Root);
+                    Trace.WriteLine($"Final expression after adding\r\n{SelectedFilterConfiguration.Conditions.Root}");
                 }
             }
 

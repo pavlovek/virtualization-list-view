@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,13 +13,11 @@ namespace VirtualizationListViewControl.Helpers
 {
     internal class LocalizableEnumItemsSource : ObservableCollection<String>, IValueConverter
     {
-        Type _type;
+        private Type _type;
 
-        IDictionary<Object, Object> _valueToNameMap;
+        private ConcurrentDictionary<object, object> _valueToNameMap;
 
-        IDictionary<Object, Object> _nameToValueMap;
-
-        readonly object _lockObj = new object();
+        private ConcurrentDictionary<object, object> _nameToValueMap;
 
         public Type Type
         {
@@ -26,25 +25,25 @@ namespace VirtualizationListViewControl.Helpers
             set
             {
                 if (!value.IsEnum)
-                    throw new ArgumentException("value must be Enum", "value");
+                    throw new ArgumentException("value must be Enum", nameof(value));
                 _type = value;
                 Initialize();
             }
         }
 
-        public Object Convert(Object value, Type targetType, Object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            bool isInverse = false;
+            if (value == null)
+                return null;
+
+            var isInverse = false;
             if (parameter != null)
                 isInverse = parameter.ToString() == "inverse";
 
-            lock (_lockObj)
-            {
-                return isInverse ? _nameToValueMap[value] : _valueToNameMap[value];
-            }
+            return isInverse ? _nameToValueMap[value] : _valueToNameMap[value];
         }
 
-        public Object ConvertBack(Object value, Type targetType, Object parameter, CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null)
                 return null;
@@ -53,45 +52,36 @@ namespace VirtualizationListViewControl.Helpers
             if (parameter != null)
                 isInverse = parameter.ToString() == "inverse";
 
-            lock (_lockObj)
-            {
-                return isInverse ? _valueToNameMap[value] : _nameToValueMap[value];
-            }
+            return isInverse ? _valueToNameMap[value] : _nameToValueMap[value];
         }
 
         void Initialize()
         {
-            lock (_lockObj)
-            {
-                _valueToNameMap = _type
-                    .GetFields(BindingFlags.Static | BindingFlags.Public)
-                    .ToDictionary(fi => fi.GetValue(null), GetLocalizedDescription);
-                _nameToValueMap = _valueToNameMap
-                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-                Clear();
-                foreach (String name in _nameToValueMap.Keys)
-                    Add(name);
-            }
+            _valueToNameMap = new ConcurrentDictionary<object, object>(_type
+                .GetFields(BindingFlags.Static | BindingFlags.Public)
+                .ToDictionary(fi => fi.GetValue(null), GetLocalizedDescription));
+            _nameToValueMap = new ConcurrentDictionary<object, object>(_valueToNameMap
+                .ToDictionary(kvp => kvp.Value, kvp => kvp.Key));
+            Clear();
+            foreach (String name in _nameToValueMap.Keys)
+                Add(name);
         }
 
-        public void Initialize(Type type, IEnumerable<Object> availableObjects)
+        public void Initialize(Type type, IEnumerable<object> availableObjects)
         {
             if (!type.IsEnum)
-                throw new ArgumentException("value must be Enum", "value");
+                throw new ArgumentException("type must be Enum", nameof(type));
             _type = type;
 
-            lock (_lockObj)
-            {
-                _valueToNameMap = _type
-                    .GetFields(BindingFlags.Static | BindingFlags.Public)
-                    .Where(fi => availableObjects.Contains(fi.GetValue(null)))
-                    .ToDictionary(fi => fi.GetValue(null), GetLocalizedDescription);
-                _nameToValueMap = _valueToNameMap
-                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
-                Clear();
-                foreach (String name in _nameToValueMap.Keys)
-                    Add(name);
-            }
+            _valueToNameMap = new ConcurrentDictionary<object, object>(_type
+                .GetFields(BindingFlags.Static | BindingFlags.Public)
+                .Where(fi => availableObjects.Contains(fi.GetValue(null)))
+                .ToDictionary(fi => fi.GetValue(null), GetLocalizedDescription));
+            _nameToValueMap = new ConcurrentDictionary<object, object>(_valueToNameMap
+                .ToDictionary(kvp => kvp.Value, kvp => kvp.Key));
+            Clear();
+            foreach (String name in _nameToValueMap.Keys)
+                Add(name);
         }
 
         static Object GetLocalizedDescription(FieldInfo fieldInfo)
@@ -109,7 +99,7 @@ namespace VirtualizationListViewControl.Helpers
         public static IEnumerable<string> GetAllValuesAndDescriptions(Type t)
         {
             if (!t.IsEnum)
-                throw new ArgumentException("t must be an Enum type", "t");
+                throw new ArgumentException("t must be an Enum type", nameof(t));
             var itemSource = new LocalizableEnumItemsSource { Type = t };
             return itemSource;
         }

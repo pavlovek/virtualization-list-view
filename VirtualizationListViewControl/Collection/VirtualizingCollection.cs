@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -120,7 +121,7 @@ namespace VirtualizationListViewControl.Collection
         /// <summary>
         /// Data items pages which view now
         /// </summary>
-        private readonly Dictionary<int, DataPage<T>> _pages = new Dictionary<int, DataPage<T>>();
+        private readonly ConcurrentDictionary<int, DataPage<T>> _pages = new ConcurrentDictionary<int, DataPage<T>>();
         
         #region PageRemoving
 
@@ -149,11 +150,12 @@ namespace VirtualizationListViewControl.Collection
                         removePage = !page.IsInUse;
                     if (removePage)
                     {
-                        var isRemove = _pages.Remove(key);
+                        DataPage<T> removedPage;
+                        var isRemove = _pages.TryRemove(key, out removedPage);
                         if (isRemove)
-                            Trace.WriteLine("Removed Page: " + key);
+                            Trace.WriteLine($"Removed Page: {key}");
                         else
-                            Trace.WriteLine("Cant removed Page: " + key);
+                            Trace.WriteLine($"Cant removed Page: {key}");
                     }
                 }
             }
@@ -187,7 +189,7 @@ namespace VirtualizationListViewControl.Collection
                     page.Populate(dataItems);
                 }
 
-                Trace.WriteLine("Page populated: " + pageIndex);
+                Trace.WriteLine($"Page populated: {pageIndex}");
             }
         }
 
@@ -208,13 +210,20 @@ namespace VirtualizationListViewControl.Collection
                 if (pageLength <= 0)
                     return;
 
-                DataPage<T> page = new DataPage<T>(pageIndex * PageSize, pageLength);
+                var page = new DataPage<T>(pageIndex * PageSize, pageLength);
 
-                _pages.Add(pageIndex, page);
+                var isAdded = _pages.TryAdd(pageIndex, page);
 
-                Trace.WriteLine("Added page: " + pageIndex);
+                if (isAdded)
+                {
+                    Trace.WriteLine($"Added page: {pageIndex}");
 
-                FetchPageCommand(pageIndex, pageLength);
+                    FetchPageCommand(pageIndex, pageLength);
+                }
+                else
+                {
+                    Trace.WriteLine($"Can't add page: {pageIndex}");
+                }
             }
             else
             {
@@ -277,13 +286,10 @@ namespace VirtualizationListViewControl.Collection
         /// </summary>
         public virtual int Count
         {
-            get
-            {
-                return _actualCount;
-            }
+            get { return _actualCount; }
             protected set
             {
-                Trace.WriteLine("New actual List Count = " + value);
+                Trace.WriteLine($"New actual List Count = {value}");
                 _actualCount = value;
 
                 FirePropertyChanged("Count");
@@ -294,7 +300,12 @@ namespace VirtualizationListViewControl.Collection
         /// <summary>
         /// Lock object for AccumulatedCount property
         /// </summary>
-        private readonly ReaderWriterLockSlim _accumulatedCountLockSlim = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLock _accumulatedCountLock = new ReaderWriterLock();
+
+        /// <summary>
+        /// Lock timeout for AccumulatedCount property
+        /// </summary>
+        private readonly TimeSpan _accumulatedCountLockSlimTimeOut = new TimeSpan(0, 0, 3);
 
         /// <summary>
         /// Accumulated items count in list (without indexer)
@@ -303,35 +314,48 @@ namespace VirtualizationListViewControl.Collection
         {
             get
             {
-                int accumulatedCount;
-                //var mustLoadCount = false;
-                _accumulatedCountLockSlim.EnterUpgradeableReadLock();
+                int accumulatedCount = 0;
                 try
                 {
-                    if (_accumulatedCount < 0)
+                    _accumulatedCountLock.AcquireReaderLock(_accumulatedCountLockSlimTimeOut);
+                    try
                     {
-                        Trace.WriteLine("Uncorrect accumulated Count = " + _accumulatedCount);
+                        if (_accumulatedCount < 0)
+                        {
+                            Trace.WriteLine($"Uncorrect accumulated Count = {_accumulatedCount}");
 
-                        _accumulatedCountLockSlim.EnterWriteLock();
-                        try { _accumulatedCount = 0; }
-                        finally { _accumulatedCountLockSlim.ExitWriteLock(); }
+                            try
+                            {
+                                var lc = _accumulatedCountLock.UpgradeToWriterLock(_accumulatedCountLockSlimTimeOut);
+                                try { _accumulatedCount = 0; }
+                                finally { _accumulatedCountLock.DowngradeFromWriterLock(ref lc); }
+                            }
+                            catch (ApplicationException)
+                            {
+                                Trace.WriteLine("Timeout UpgradeToWriterLock AccumulatedCount properties");
+                            }
+                        }
+                        accumulatedCount = _accumulatedCount;
                     }
-                    accumulatedCount = _accumulatedCount;
+                    finally
+                    {
+                        _accumulatedCountLock.ReleaseReaderLock();
+                    }
                 }
-                finally
+                catch (ApplicationException)
                 {
-                    _accumulatedCountLockSlim.ExitUpgradeableReadLock();
+                    Trace.WriteLine("Timeout ReaderLock AccumulatedCount properties");
                 }
 
                 return accumulatedCount;
             }
             set
             {
-                Trace.WriteLine("New accumulated List Count = " + value);
+                Trace.WriteLine($"New accumulated List Count = {value}");
 
-                _accumulatedCountLockSlim.EnterWriteLock();
+                _accumulatedCountLock.AcquireWriterLock(_accumulatedCountLockSlimTimeOut);
                 try { _accumulatedCount = value; }
-                finally { _accumulatedCountLockSlim.ExitWriteLock(); }
+                finally { _accumulatedCountLock.ReleaseWriterLock(); }
             }
         }
         private int _accumulatedCount;
@@ -354,30 +378,27 @@ namespace VirtualizationListViewControl.Collection
                 int pageIndex = index / PageSize;
                 int pageOffset = index % PageSize;
 
-                lock (_pageLoadingLockSlim)
+                // Request page
+                RequestPage(pageIndex);
+
+                // Defensive check if async loading
+                if (!_pages.ContainsKey(pageIndex)
+                    || _pages[pageIndex] == null)
                 {
-                    // Request page
-                    RequestPage(pageIndex);
-
-                    // Defensive check if async loading
-                    if (!_pages.ContainsKey(pageIndex)
-                        || _pages[pageIndex] == null)
-                    {
-                        Trace.WriteLine("No page " + pageIndex + ". Get default DataWrapper");
-                        return default(DataWrapper<T>);
-                    }
-
-                    if (_pages[pageIndex].Items.Count <= pageOffset)
-                    {
-                        for (int i = _pages[pageIndex].Items.Count; i <= pageOffset; i++)
-                        {
-                            _pages[pageIndex].Items.Add(new DataWrapper<T>(pageIndex * PageSize + i));
-                            Trace.WriteLine("No item " + i + " on page " + pageIndex + ". Add default DataWrapper");
-                        }
-                    }
-
-                    return _pages[pageIndex].Items[pageOffset];
+                    Trace.WriteLine($"No page {pageIndex}. Get default DataWrapper");
+                    return default(DataWrapper<T>);
                 }
+
+                if (_pages[pageIndex].Items.Count <= pageOffset)
+                {
+                    for (int i = _pages[pageIndex].Items.Count; i <= pageOffset; i++)
+                    {
+                        _pages[pageIndex].Items.Add(new DataWrapper<T>(pageIndex * PageSize + i));
+                        Trace.WriteLine($"No item {i} on page {pageIndex}. Add default DataWrapper");
+                    }
+                }
+
+                return _pages[pageIndex].Items[pageOffset];
             }
             set { throw new NotSupportedException(); }
         }
@@ -486,10 +507,11 @@ namespace VirtualizationListViewControl.Collection
         public int IndexOf(DataWrapper<T> item)
         {
             if (item == null) return -1;
-            foreach (KeyValuePair<int, DataPage<T>> keyValuePair in _pages)
+            foreach (var keyValuePair in _pages)
             {
                 int indexWithinPage = keyValuePair.Value.Items.IndexOf(item);
-                if (indexWithinPage != -1) return PageSize * keyValuePair.Key + indexWithinPage;
+                if (indexWithinPage != -1)
+                    return PageSize * keyValuePair.Key + indexWithinPage;
             }
             return -1;
         }
@@ -589,9 +611,9 @@ namespace VirtualizationListViewControl.Collection
 
             //Update list count
             Count = AccumulatedCount;
-            NotifyCollectionChangedEventHandler h = CollectionChanged;
+            var h = CollectionChanged;
             if (h != null)
-                foreach (NotifyCollectionChangedEventArgs arg in e)
+                foreach (var arg in e)
                     if (arg.NewStartingIndex < _actualCount
                         && arg.OldStartingIndex < _actualCount)
                         h(this, arg);
@@ -626,7 +648,7 @@ namespace VirtualizationListViewControl.Collection
         /// <param name="e">Property changed information</param>
         protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            PropertyChangedEventHandler h = PropertyChanged;
+            var h = PropertyChanged;
             if (h != null)
                 h(this, e);
         }
@@ -815,7 +837,7 @@ namespace VirtualizationListViewControl.Collection
                         {
                             _pages[key].Items.Add(new DataWrapper<T>(key * PageSize + _pages[key].Items.Count));
 
-                            Trace.WriteLine("Item Added: " + index);
+                            Trace.WriteLine($"Item Added: {index}");
                         }
                         if (key == pageIndex)
                             //If new element add to current page, save his to movedItem
@@ -843,11 +865,18 @@ namespace VirtualizationListViewControl.Collection
                 {
                     DataPage<T> page = new DataPage<T>(pageIndex * PageSize, 1);
 
-                    _pages.Add(pageIndex, page);
+                    var isAdded = _pages.TryAdd(pageIndex, page);
 
-                    Trace.WriteLine("Added page: " + pageIndex);
+                    if (isAdded)
+                    {
+                        Trace.WriteLine($"Added page: {pageIndex}");
 
-                    PopulatePage(pageIndex, new List<T> { newItem });
+                        PopulatePage(pageIndex, new List<T> { newItem });
+                    }
+                    else
+                    {
+                        Trace.WriteLine($"Can't add page: {pageIndex}");
+                    }
                 }
 
                 //Augment accumulated items count in collection
@@ -855,7 +884,7 @@ namespace VirtualizationListViewControl.Collection
             }
             catch (InvalidOperationException exception)
             {
-                Trace.WriteLine("AddItem throw " + exception.Message);
+                Trace.WriteLine($"AddItem throw {exception}");
             }
             
             //Shift scroll box
@@ -910,11 +939,11 @@ namespace VirtualizationListViewControl.Collection
                                                                           oldItem, 
                                                                           index);
                     
-                    Trace.WriteLine("Item Changed: " + index);
+                    Trace.WriteLine($"Item Changed: {index}");
                 }
                 else
                 {
-                    Trace.WriteLine("Item Changed is wrong: " + index);
+                    Trace.WriteLine($"Item Changed is wrong: {index}");
                     FetchPageCommand(pageIndex, PageSize);
                 }
             }
@@ -960,7 +989,7 @@ namespace VirtualizationListViewControl.Collection
                                 _pages[key].Items[i].Data = default(T);
                             }
                             else
-                                Trace.WriteLine("FetchItem is wrong: " + movedItemIndex);
+                                Trace.WriteLine($"FetchItem is wrong: {movedItemIndex}");
                         }
                     }
                     if (key == AccumulatedCount / PageSize
@@ -968,7 +997,7 @@ namespace VirtualizationListViewControl.Collection
                     {
                         _pages[key].Items.RemoveAt(_pages[key].Items.Count - 1);
 
-                        Trace.WriteLine("Item Removed: " + index);
+                        Trace.WriteLine($"Item Removed: {index}");
                     }
                 }
 
@@ -977,7 +1006,7 @@ namespace VirtualizationListViewControl.Collection
             }
             catch (InvalidOperationException exception)
             {
-                Trace.WriteLine("RemoveItem throw " + exception.Message);
+                Trace.WriteLine($"RemoveItem throw {exception}");
             }
             
             if (SelectedIndex == index)
@@ -1010,7 +1039,7 @@ namespace VirtualizationListViewControl.Collection
                 return;
 
             if (ListEventsHandlerActionBlock.InputCount > 10)
-                Trace.WriteLine("Count changes handler > " + ListEventsHandlerActionBlock.InputCount);
+                Trace.WriteLine($"Count changes handler > {ListEventsHandlerActionBlock.InputCount}");
 
             ListEventsHandlerActionBlock.Post(serverListChangings);
         }
@@ -1045,7 +1074,7 @@ namespace VirtualizationListViewControl.Collection
                     PopulatePage(pageIndex, requestedData.RequestedDataList);
                     AccumulatedCount = requestedData.OverallCount;
 
-                    Trace.WriteLine("Request Data on page " + pageIndex + " overall count = " + requestedData.OverallCount);
+                    Trace.WriteLine($"Request Data on page {pageIndex} overall count = {requestedData.OverallCount}");
 
                     //Undate selected item
                     if (requestedData.StartIndex <= SelectedIndex)
@@ -1187,12 +1216,9 @@ namespace VirtualizationListViewControl.Collection
         /// </summary>
         public virtual void ClearList()
         {
-            lock (_pageLoadingLockSlim)
-            {
-                Trace.WriteLine("Clear List");
+            Trace.WriteLine("Clear List");
 
-                _pages.Clear();
-            }
+            _pages.Clear();
 
             OnClearSelection(true);
 
@@ -1212,15 +1238,30 @@ namespace VirtualizationListViewControl.Collection
         {
             get
             {
-                _pageLoadingLockSlim.EnterReadLock();
-                try { return _isPageLoading; }
-                finally { _pageLoadingLockSlim.ExitReadLock(); }
+                try
+                {
+                    _pageLoadingLock.AcquireReaderLock(_pageLoadingLockTimeOut);
+                    try { return _isPageLoading; }
+                    finally { _pageLoadingLock.ReleaseReaderLock(); }
+                }
+                catch (ApplicationException exception)
+                {
+                    Trace.WriteLine(exception.ToString());
+                    return false;
+                }
             }
             set
             {
-                _pageLoadingLockSlim.EnterWriteLock();
-                try { _isPageLoading = value; }
-                finally { _pageLoadingLockSlim.ExitWriteLock(); }
+                try
+                {
+                    _pageLoadingLock.AcquireWriterLock(_pageLoadingLockTimeOut);
+                    try { _isPageLoading = value; }
+                    finally { _pageLoadingLock.ReleaseWriterLock(); }
+                }
+                catch (ApplicationException exception)
+                {
+                    Trace.WriteLine(exception.ToString());
+                }
             }
         }
         private bool _isPageLoading;
@@ -1228,7 +1269,12 @@ namespace VirtualizationListViewControl.Collection
         /// <summary>
         /// Lock object for page loading indicator
         /// </summary>
-        private readonly ReaderWriterLockSlim _pageLoadingLockSlim = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLock _pageLoadingLock = new ReaderWriterLock();
+
+        /// <summary>
+        /// Lock timeout for page loading indicator
+        /// </summary>
+        private readonly TimeSpan _pageLoadingLockTimeOut = new TimeSpan(0, 0, 3);
 
         #endregion
 
