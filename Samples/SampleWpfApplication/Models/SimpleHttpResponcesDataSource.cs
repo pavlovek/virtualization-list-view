@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using SamplesBasicDto;
 using SamplesSpecificDto;
 using VirtualizationListView.SortAndFilterDTO;
@@ -10,6 +11,7 @@ using VirtualizationListViewControl.ServerListChangesCallBack;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using SampleWpfApplication.Helpers;
 
 namespace SampleWpfApplication.Models
 {
@@ -25,46 +27,64 @@ namespace SampleWpfApplication.Models
 
         private void GenerateHttpResponces(int count)
         {
-            var rand = new Random();
-            using (var db = new HttpResponcesContext())
+            try
             {
-                for (int i = 0; i < count; i++)
+                var rand = new Random();
+                using (var db = new HttpResponcesContext())
                 {
-                    HttpResponce newResponce = null;
-                    switch (rand.Next(3))
+                    if (db.HttpResponces.Any())
                     {
-                        case 0:
-                        {
-                            newResponce = new HttpTextResponce(DateTime.Now,
-                                (MimeTypes) rand.Next(2),
-                                rand.Next(100),
-                                "UTF8");
-                            break;
-                        }
-                        case 1:
-                        {
-                            newResponce = new HttpImageResponce(DateTime.Now,
-                                (MimeTypes) rand.Next(2, 4),
-                                rand.Next(100, 1000),
-                                new Size(480, 360),
-                                256);
-                            break;
-                        }
-                        case 2:
-                        {
-                            newResponce = new HttpVideoResponce(DateTime.Now,
-                                MimeTypes.Video,
-                                rand.Next(1000, 10000),
-                                new Size(640, 780),
-                                new TimeSpan(0, rand.Next(1, 60), rand.Next(0, 60)),
-                                "KMP");
-                            break;
-                        }
+#if !RESET_DATA
+                        return;
+#endif
                     }
-                    if (newResponce != null)
-                        db.HttpResponces.Add(newResponce);
+                    
+                    //Clear old data
+                    db.HttpResponces.Clear();
+                    db.SaveChanges();
+
+                    for (int i = 0; i < count; i++)
+                    {
+                        HttpResponce newResponce = null;
+                        switch (rand.Next(3))
+                        {
+                            case 0:
+                            {
+                                newResponce = new HttpTextResponce(DateTime.Now,
+                                    (MimeTypes)rand.Next(2),
+                                    rand.Next(100),
+                                    "UTF8");
+                                break;
+                            }
+                            case 1:
+                            {
+                                newResponce = new HttpImageResponce(DateTime.Now,
+                                    (MimeTypes)rand.Next(2, 4),
+                                    rand.Next(100, 1000),
+                                    new Size(480, 360),
+                                    256);
+                                break;
+                            }
+                            case 2:
+                            {
+                                newResponce = new HttpVideoResponce(DateTime.Now,
+                                    MimeTypes.Video,
+                                    rand.Next(1000, 10000),
+                                    new Size(640, 780),
+                                    new TimeSpan(0, rand.Next(1, 60), rand.Next(0, 60)),
+                                    "KMP");
+                                break;
+                            }
+                        }
+                        if (newResponce != null)
+                            db.HttpResponces.Add(newResponce);
+                    }
+                    db.SaveChanges();
                 }
-                db.SaveChanges();
+            }
+            catch (Exception exception)
+            {
+                Trace.WriteLine(exception);
             }
         }
 
