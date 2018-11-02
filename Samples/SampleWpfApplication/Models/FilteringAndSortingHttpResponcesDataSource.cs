@@ -79,7 +79,12 @@ namespace SampleWpfApplication.Models
                             break;
                         }
                 }
-                result.Add(newResponce);
+
+                if (newResponce != null)
+                {
+                    newResponce.Id = i;
+                    result.Add(newResponce);
+                }
             }
 
             return result;

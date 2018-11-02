@@ -20,6 +20,7 @@ namespace SampleWpfApplication.Models
     public class ItemsChangingHttpResponceDataSource : IItemsProvider<HttpResponce>
     {
         private readonly List<KeyValuePair<long, HttpResponce>> _httpResponces;
+        private int _increment = 0;
 
         private readonly Type _httpResponceType;
         private readonly Dictionary<Type, Type[]> _httpResponcesKnownTypes;
@@ -61,6 +62,7 @@ namespace SampleWpfApplication.Models
         {
             _httpResponces.Clear();
             _idCount = 0;
+            _increment = 0;
 
             FetchRangeCommand(0, 0, true);
         }
@@ -186,8 +188,9 @@ namespace SampleWpfApplication.Models
                     {
                         var currIdx = _idCount;
                         _idCount++;
-                        var newHttpResponce = GetHttpResponce();
+                        var newHttpResponce = GetHttpResponce(_increment);
                         _httpResponces.Insert(position, new KeyValuePair<long, HttpResponce>(currIdx, newHttpResponce));
+                        _increment++;
 
                         updateLog.Append(" ADD (pos: ");
                         updateLog.Append(position);
@@ -227,8 +230,9 @@ namespace SampleWpfApplication.Models
                         {
                             var currIdx = _idCount;
                             _idCount++;
-                            var newHttpResponce = GetHttpResponce();
+                            var newHttpResponce = GetHttpResponce(_increment);
                             _httpResponces.Insert(position, new KeyValuePair<long, HttpResponce>(currIdx, newHttpResponce));
+                            _increment++;
 
                             var realPosition = GetIndexAfterSortAndFilter(currIdx);
                             if (realPosition >= 0)
@@ -286,7 +290,8 @@ namespace SampleWpfApplication.Models
                         if (_httpResponces.Count == 0)
                             break;
 
-                        var newHttpResponce = GetHttpResponce();
+                        var newHttpResponce = GetHttpResponce(_httpResponces[position].Value.Id);
+                        newHttpResponce.DetectTime = _httpResponces[position].Value.DetectTime;
 
                         updateLog.Append(" CHANGE (");
                         updateLog.Append(position);
@@ -327,8 +332,9 @@ namespace SampleWpfApplication.Models
         /// <summary>
         /// Get new Http responce
         /// </summary>
+        /// <param name="id">Increment Id</param>
         /// <returns>New Http responce</returns>
-        private HttpResponce GetHttpResponce()
+        private HttpResponce GetHttpResponce(int id)
         {
             var rand = new Random();
             HttpResponce newResponce = null;
@@ -363,6 +369,8 @@ namespace SampleWpfApplication.Models
                     break;
                 }
             }
+            if (newResponce != null)
+                newResponce.Id = id;
 
             return newResponce;
         }
