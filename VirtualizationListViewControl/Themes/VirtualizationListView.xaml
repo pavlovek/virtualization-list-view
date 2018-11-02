@@ -454,6 +454,7 @@
                                                             VirtualizingStackPanel.IsVirtualizing="True"
                                                             VirtualizingStackPanel.VirtualizationMode="Recycling"
                                                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                                                            ScrollViewer.CanContentScroll="True"
                                                             SelectionMode="Single" 
                                                             Width="Auto" Height="Auto"
                                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"

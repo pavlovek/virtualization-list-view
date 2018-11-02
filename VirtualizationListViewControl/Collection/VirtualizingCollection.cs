@@ -90,13 +90,20 @@ namespace VirtualizationListViewControl.Collection
         public VirtualizingCollection(IItemsProvider<T> itemsProvider)
         {
             _itemsProvider = itemsProvider;
+
             SelectedItem = default(T);
+
             Timer.Interval = new TimeSpan(0, 0, 30);
             Timer.Tick += CleanUpPagesOnTimerTick;
             Timer.Start();
+
             Stopwatch = new Stopwatch();
+
             _uiThreadDispatcher = Dispatcher.CurrentDispatcher;
+            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(_uiThreadDispatcher));
+
             ListEventsHandlerActionBlock = new ActionBlock<List<ServerListChanging<T>>>((Action<List<ServerListChanging<T>>>)ListChangesHandler);
+
             SubscribeToItemsProviderEvents();
         }
 
@@ -605,10 +612,9 @@ namespace VirtualizationListViewControl.Collection
         protected virtual void OnCollectionChanged(List<NotifyCollectionChangedEventArgs> e)
         {
             Trace.WriteLine("OnCollectionChanged");
-            
-            if (ClearSelection != null)
-                ClearSelection(false);
 
+            OnClearSelection();
+            
             //Update list count
             Count = AccumulatedCount;
             var h = CollectionChanged;
@@ -616,21 +622,9 @@ namespace VirtualizationListViewControl.Collection
                 foreach (var arg in e)
                     if (arg.NewStartingIndex < _actualCount
                         && arg.OldStartingIndex < _actualCount)
-                        h(this, arg);
+                        _uiThreadDispatcher.BeginInvoke(h, this, arg);
 
-            if (ResetSelection != null)
-                ResetSelection();
-        }
-
-        /// <summary>
-        /// Rise async collection changed handler
-        /// </summary>
-        /// <param name="arg">Collection changed information</param>
-        protected void FireCollectionChanged(List<NotifyCollectionChangedEventArgs> arg)
-        {
-            Action<List<NotifyCollectionChangedEventArgs>> handler = OnCollectionChanged;
-            if (_uiThreadDispatcher != null)
-                _uiThreadDispatcher.Invoke(handler, arg);
+            OnResetSelection();
         }
 
         #endregion
@@ -682,7 +676,7 @@ namespace VirtualizationListViewControl.Collection
         protected void OnClearSelection(bool isFullClear = false)
         {
             if (ClearSelection != null)
-                _uiThreadDispatcher.Invoke(ClearSelection, isFullClear);
+                _uiThreadDispatcher.BeginInvoke(ClearSelection, isFullClear);
         }
 
         /// <summary>
@@ -696,28 +690,95 @@ namespace VirtualizationListViewControl.Collection
         protected void OnResetSelection()
         {
             if (ResetSelection != null)
-                _uiThreadDispatcher.Invoke(ResetSelection);
+                _uiThreadDispatcher.BeginInvoke(ResetSelection);
         }
+
+        /// <summary>
+        /// Lock object for SelectedItem and SelectedIndex properties
+        /// </summary>
+        private readonly ReaderWriterLock _selectedItemLock = new ReaderWriterLock();
+
+        /// <summary>
+        /// Lock timeout for SelectedItem and SelectedIndex properties
+        /// </summary>
+        private readonly TimeSpan _selectedItemLockTimeOut = new TimeSpan(0, 0, 3);
 
         /// <summary>
         /// Selected item
         /// </summary>
         public object SelectedItem
         {
-            get { return _selectedItem; }
+            get
+            {
+                try
+                {
+                    _selectedItemLock.AcquireReaderLock(_selectedItemLockTimeOut);
+                    try
+                    {
+                        return _selectedItem;
+                    }
+                    finally
+                    {
+                        _selectedItemLock.ReleaseReaderLock();
+                    }
+                }
+                catch (ApplicationException)
+                {
+                    Trace.WriteLine("Timeout ReaderLock SelectedItem properties");
+                }
+
+                return default(T);
+            }
             set
             {
-                if (value != null)
+                if (value != null
+                    && ((DataWrapper<T>)value).Data != null)
                 {
                     var clonableData = ((DataWrapper<T>) value).Data as ICloneable;
                     if (clonableData != null)
-                        _selectedItem = (T) clonableData.Clone();
+                    {
+                        var cloneData = (T)clonableData.Clone();
+                        try
+                        {
+                            _selectedItemLock.AcquireWriterLock(_selectedItemLockTimeOut);
+                            try
+                            {
+                                _selectedItem = cloneData;
+                            }
+                            finally
+                            {
+                                _selectedItemLock.ReleaseWriterLock();
+                            }
+                        }
+                        catch (ApplicationException)
+                        {
+                            Trace.WriteLine("Timeout WriterLock SelectedItem properties");
+                        }
+                    }
                     else
-                        throw new NotSupportedException("Selected item data must be clonable (ICloneable), because it is necessary when DataWrapper changing selected item shoud not changed too");
+                    {
+                        throw new NotSupportedException(
+                            $"Selected item data ({((DataWrapper<T>) value).Data.GetType()}) must be clonable (ICloneable), because it is necessary when DataWrapper changing selected item shoud not changed too");
+                    }
                 }
                 else
                 {
-                    _selectedItem = default(T);
+                    try
+                    {
+                        _selectedItemLock.AcquireWriterLock(_selectedItemLockTimeOut);
+                        try
+                        {
+                            _selectedItem = default(T);
+                        }
+                        finally
+                        {
+                            _selectedItemLock.ReleaseWriterLock();
+                        }
+                    }
+                    catch (ApplicationException)
+                    {
+                        Trace.WriteLine("Timeout WriterLock SelectedItem properties");
+                    }
                 }
             }
         }
@@ -728,8 +789,50 @@ namespace VirtualizationListViewControl.Collection
         /// </summary>
         public int SelectedIndex
         {
-            get { return _selectedIndex; }
-            set { _selectedIndex = value; }
+            get
+            {
+                try
+                {
+                    _selectedItemLock.AcquireReaderLock(_selectedItemLockTimeOut);
+                    try
+                    {
+                        return _selectedIndex;
+                    }
+                    finally
+                    {
+                        _selectedItemLock.ReleaseReaderLock();
+                    }
+                }
+                catch (ApplicationException)
+                {
+                    Trace.WriteLine("Timeout ReaderLock SelectedIndex properties");
+                }
+
+                return -1;
+            }
+            set
+            {
+                try
+                {
+                    _selectedItemLock.AcquireWriterLock(_selectedItemLockTimeOut);
+                    try
+                    {
+                        if (value < 0
+                            && _selectedIndex >= 0)
+                            Trace.WriteLine($"Unselect item: {_selectedIndex}");
+
+                        _selectedIndex = value;
+                    }
+                    finally
+                    {
+                        _selectedItemLock.ReleaseWriterLock();
+                    }
+                }
+                catch (ApplicationException)
+                {
+                    Trace.WriteLine("Timeout WriterLock SelectedIndex properties");
+                }
+            }
         }
 
         /// <summary>
@@ -900,7 +1003,7 @@ namespace VirtualizationListViewControl.Collection
                         && (_pages[SelectedIndex / PageSize].Items[SelectedIndex % PageSize].Data == null
                             || !(_pages[SelectedIndex / PageSize].Items[SelectedIndex % PageSize].Data).Equals(SelectedItem)))
                     {
-                        Trace.WriteLine("Selected Item is wrong");
+                        Trace.WriteLine("Selected Item is wrong (AddItem)");
 
                         //SelectedIndex = -1;
                         //SelectedItem = null;
@@ -1013,6 +1116,8 @@ namespace VirtualizationListViewControl.Collection
             {
                 SelectedIndex = -1;
                 SelectedItem = null;
+
+                Trace.WriteLine($"Remove selected item: {index}");
             }
             if (index < SelectedIndex)
             {
@@ -1098,7 +1203,7 @@ namespace VirtualizationListViewControl.Collection
 
                         if (!findUpdated)
                         {
-                            Trace.WriteLine("Selected Item is wrong");
+                            Trace.WriteLine("Selected Item is wrong (ListChangesHandler)");
                         }
                     }
 
@@ -1171,14 +1276,14 @@ namespace VirtualizationListViewControl.Collection
             if (aplliedChangesList.Count > 0)
             {
                 Trace.WriteLine("FireCollectionChanged - RESET");
-                FireCollectionChanged(new List<NotifyCollectionChangedEventArgs>
+                OnCollectionChanged(new List<NotifyCollectionChangedEventArgs>//FireCollectionChanged
                     {
                         new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset)
                     });
             }
 
-            if (hasCountChanging)
-                OnResetSelection();
+            //if (hasCountChanging)
+            //    OnResetSelection();
         }
 
         /// <summary>
@@ -1224,7 +1329,7 @@ namespace VirtualizationListViewControl.Collection
 
             AccumulatedCount = 0;
 
-            FireCollectionChanged(new List<NotifyCollectionChangedEventArgs> { new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset) });
+            OnCollectionChanged(new List<NotifyCollectionChangedEventArgs> { new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset) });//FireCollectionChanged
         }
 
         #endregion
@@ -1326,7 +1431,7 @@ namespace VirtualizationListViewControl.Collection
         private void OnFilterChanged()
         {
             if (FilterChanged != null)
-                _uiThreadDispatcher.Invoke(FilterChanged);
+                _uiThreadDispatcher.BeginInvoke(FilterChanged);
         }
 
         /// <summary>

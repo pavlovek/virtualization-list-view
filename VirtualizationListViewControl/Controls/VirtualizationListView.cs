@@ -322,6 +322,8 @@ namespace VirtualizationListViewControl.Controls
                     ((ISelectionManager)ItemsSource).SelectedItem = _virtualizationListView.SelectedItem;
                     ((ISelectionManager)ItemsSource).SelectedIndex = _virtualizationListView.SelectedIndex;
 
+                    Trace.WriteLine($"Select item: {_virtualizationListView.SelectedIndex}");
+
                     SelectedItem = ((ISelectionManager)ItemsSource).SelectedItem;
                 }
             }
@@ -551,6 +553,14 @@ namespace VirtualizationListViewControl.Controls
                 {
                     _isUpdateSelection = false;
                     _virtualizationListView.SelectedItem = null;
+
+                    if (ItemsSource != null && ItemsSource is ISelectionManager)
+                    {
+                        ((ISelectionManager)ItemsSource).SelectedItem = null;
+                        ((ISelectionManager)ItemsSource).SelectedIndex = -1;
+
+                        SelectedItem = null;
+                    }
 
                     keyEventArgs.Handled = true;
                     break;
